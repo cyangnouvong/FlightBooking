@@ -63,7 +63,7 @@ CREATE TABLE property (
     zip char(5) NOT NULL,
     nightlyCostPerPerson float NOT NULL,
     capacity int NOT NULL,
-    description varchar(50) NOT NULL,
+    description varchar(300),
     PRIMARY KEY (name, ownerPhone),
     FOREIGN KEY (ownerPhone) REFERENCES client (phoneNumber)
 );
