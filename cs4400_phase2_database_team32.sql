@@ -27,7 +27,7 @@ DROP TABLE IF EXISTS admin;
 CREATE TABLE admin (
 	email varchar(50) NOT NULL,
     fname varchar(100) NOT NULL,
-    lname varchar(100) NOT NULL,
+    lname varchar(100),
     password varchar(50) NOT NULL,
     PRIMARY KEY (email)
 );
@@ -38,7 +38,7 @@ DROP TABLE IF EXISTS client;
 CREATE TABLE client (
 	email varchar(50) NOT NULL,
     fname varchar(100) NOT NULL,
-    lname varchar(100) NOT NULL,
+    lname varchar(100),
     password varchar(50) NOT NULL,
     phoneNumber char(12) NOT NULL,
     creditCardNum char(19),
