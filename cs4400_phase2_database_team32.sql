@@ -41,12 +41,12 @@ CREATE TABLE client (
     lname varchar(100) NOT NULL,
     password varchar(50) NOT NULL,
     phoneNumber char(12) NOT NULL,
+    creditCardNum char(19),
+    cvv char(3),
+    expDate date,
+    currentLocation varchar(50),
     isOwner boolean NOT NULL,
     isCustomer boolean NOT NULL,
-    currentLocation varchar(50) NOT NULL,
-    cvv char(3) NOT NULL,
-    expDate date NOT NULL,
-    creditCardNum char(19) NOT NULL,
     PRIMARY KEY (email),
     UNIQUE KEY (phoneNumber)
 );
@@ -270,6 +270,69 @@ INSERT INTO airportAttractions VALUES
 ("MIA", "Miami Heat Basketball Stadium"),
 ("DFW", "Texas Longhorns Stadium"),
 ("DFW", "The Original Texas Roadhouse");
+
+-- ---------------------------
+-- ACCOUNTS INSERT STATEMENTS
+-- ---------------------------
+
+INSERT INTO admin VALUES
+("mmoss1@travelagency.com", "Mark", "Moss", "password1"),
+("asmith@travelagency.com", "Aviva", "Smith", "password2");
+
+INSERT INTO client VALUES
+("mscott22@gmail.com", "Michael", "Scott", "password3", "555-123-4567", null, null, null, null, TRUE, FALSE),
+("arthurread@gmail.com", "Arthur", "Read", "password4", "555-234-5678", null, null, null, null, TRUE, FALSE),
+("jwayne@gmail.com", "John", "Wayne", "password5", "555-345-6789", null, null, null, null, TRUE, FALSE),
+("gburdell3@gmail.com", "George", "Burdell", "password6", "555-456-7890", null, null, null, null, TRUE, FALSE),
+("mj23@gmail.com", "Michael", "Jordan", "password7", "555-567-8901", null, null, null, null, TRUE, FALSE),
+("lebron6@gmail.com", "Lebron", "James", "password8", "555-678-9012", null, null, null, null, TRUE, FALSE),
+("msmith5@gmail.com", "Michael", "Smith", "password9", "555-789-0123", null, null, null, null, TRUE, FALSE),
+("ellie2@gmail.com", "Ellie", "Johnson", "password10", "555-890-1234", null, null, null, null, TRUE, FALSE),
+("scooper3@gmail.com", "Sheldon", "Cooper", "password11", "678-123-4567", "6518 5559 7446 1663", "551", "2024-02-01", null, TRUE, TRUE),
+("mgeller5@gmail.com", "Monica", "Geller", "password12", "678-234-5678", "2328 5670 4310 1965", "644", "2024-03-01", null, TRUE, TRUE),
+("cbing10@gmail.com", "Chandler", "Bing", "password13", "678-345-6789", "8387 9523 9827 9291", "201", "2023-02-01", null, TRUE, TRUE),
+("hwmit@gmail.com", "Howard", "Wolowitz", "password14", "678-456-7890", "6558 8596 9852 5299", "102", "2023-04-01", null, TRUE, TRUE),
+("swilson@gmail.com", "Samantha", "Wilson", "password16", "770-123-4567", "9383 3212 4198 1836", "455", "2022-08-01", null, FALSE, TRUE),
+("aray@tiktok.com", "Addison", "Ray", "password17", "770-234-5678", "3110 2669 7949 5605", "744", "2022-08-01", null, FALSE, TRUE),
+("cdemilio@tiktok.com", "Charlie", "Demilio", "password18", "770-345-6789", "2272 3555 4078 4744", "606", "2025-02-01", null, FALSE, TRUE),
+("bshelton@gmail.com", "Blake", "Shelton", "password19", "770-456-7890", "9276 7639 7883 4273", "862", "2023-09-01", null, FALSE, TRUE),
+("lbryan@gmail.com", "Luke", "Bryan", "password20", "770-567-8901", "4652 3726 8864 3798", "258", "2023-05-01", null, FALSE, TRUE),
+("tswift@gmail.com", "Taylor", "Swift", "password21", "770-678-9012", "5478 8420 4436 7471", "857", "2024-12-01", null, FALSE, TRUE),
+("jseinfeld@gmail.com", "Jerry", "Seinfeld", "password22", "770-789-0123", "3616 8977 1296 3372", "295", "2022-06-01", null, FALSE, TRUE),
+("maddiesmith@gmail.com", "Madison", "Smith", "password23", "770-890-1234", "9954 5698 6355 6952", "794", "2022-07-01", null, FALSE, TRUE),
+("johnthomas@gmail.com", "John", "Thomas", "password24", "404-770-5555", "7580 3274 3724 5356", "269", "2025-10-01", null, FALSE, TRUE),
+("boblee15@gmail.com", "Bob", "Lee", "password25", "404-678-5555", "7907 3513 7161 4248", "858", "2025-11-01", null, FALSE, TRUE);
+
+
+-- -----------------------------
+-- PROPERTIES INSERT STATEMENTS
+-- -----------------------------
+
+-- ---------------------------
+-- BOOKINGS INSERT STATEMENTS
+-- ---------------------------
+
+-- --------------------------------------
+-- RATINGS AND REVIEWS INSERT STATEMENTS
+-- --------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
