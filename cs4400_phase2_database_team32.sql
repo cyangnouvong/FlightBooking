@@ -3,7 +3,7 @@
 
 -- Team 32
 -- Chelsea Yangnouvong (cyangnouvong3)
--- Keely Culbertson (GT username)
+-- Keely Culbertson (kculbertson3)
 -- Rebecca Tafete (rtafete3)
 -- Serena Gao (sgao97)
 
