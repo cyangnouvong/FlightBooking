@@ -55,28 +55,30 @@ CREATE TABLE client (
 
 DROP TABLE IF EXISTS property;
 CREATE TABLE property (
-	ownerPhone char(12) NOT NULL,
+	-- ownerPhone char(12) NOT NULL,
+    email varchar(50) NOT NULL,
     name varchar(50) NOT NULL,
+    description varchar(300),
+    capacity int NOT NULL,
+    nightlyCostPerPerson float NOT NULL,
     street varchar(50) NOT NULL,
     city varchar(50) NOT NULL,
     state char(2) NOT NULL,
     zip char(5) NOT NULL,
-    nightlyCostPerPerson float NOT NULL,
-    capacity int NOT NULL,
-    description varchar(300),
-    PRIMARY KEY (name, ownerPhone),
-    FOREIGN KEY (ownerPhone) REFERENCES client (phoneNumber)
+    PRIMARY KEY (name, email),
+    UNIQUE KEY (street, city, state, zip), -- added idk if right
+    FOREIGN KEY (email) REFERENCES client (email)
 );
 
 -- property amenities table
 
 DROP TABLE IF EXISTS propertyAmenities;
 CREATE TABLE propertyAmenities (
-	propertyOwner char(12) NOT NULL,
+	email varchar(50) NOT NULL,
     propertyName varchar(50) NOT NULL,
     amenity varchar(50) NOT NULL,
-    PRIMARY KEY (propertyOwner, propertyName),
-    FOREIGN KEY (propertyOwner) REFERENCES property (ownerPhone),
+    PRIMARY KEY (email, propertyName, amenity),
+    FOREIGN KEY (email) REFERENCES property (email),
     FOREIGN KEY (propertyName) REFERENCES property (name)
 );
 
@@ -136,12 +138,12 @@ CREATE TABLE flight (
 
 DROP TABLE IF EXISTS flightBooking;
 CREATE TABLE flightBooking (
-	customerPhone char(10) NOT NULL,
+	email char(50) NOT NULL,
     airlineName varchar(50) NOT NULL,
     flightNum char(5) NOT NULL,
     numSeats int NOT NULL,
-    PRIMARY KEY (customerPhone, airlineName, flightNum),
-    FOREIGN KEY (customerPhone) REFERENCES client (phoneNumber),
+    PRIMARY KEY (email, airlineName, flightNum),
+    FOREIGN KEY (email) REFERENCES client (email),
     FOREIGN KEY (airlineName) REFERENCES flight (airlineName),
     FOREIGN KEY (flightNum) REFERENCES flight (flightNum)
 );
@@ -150,38 +152,38 @@ CREATE TABLE flightBooking (
 
 DROP TABLE IF EXISTS ownerRating;
 CREATE TABLE ownerRating (
-	ownerPhone char(12) NOT NULL,
-    customerPhone char(12) NOT NULL,
-    score float NOT NULL,
-    PRIMARY KEY (ownerPhone, customerPhone),
-    FOREIGN KEY (ownerPhone) REFERENCES client (phoneNumber),
-    FOREIGN KEY (customerPhone) REFERENCES client (phoneNumber)
+	ownerEmail varchar(50) NOT NULL,
+    customerEmail varchar(50) NOT NULL,
+    score int NOT NULL,
+    PRIMARY KEY (ownerEmail, customerEmail),
+    FOREIGN KEY (ownerEmail) REFERENCES client (email),
+    FOREIGN KEY (customerEmail) REFERENCES client (email)
 );
 
 -- customer rating table
 
 DROP TABLE IF EXISTS customerRating;
 CREATE TABLE customerRating (
-	ownerPhone char(12) NOT NULL,
-    customerPhone char(12) NOT NULL,
-    score float NOT NULL,
-    PRIMARY KEY (ownerPhone, customerPhone),
-    FOREIGN KEY (ownerPhone) REFERENCES client (phoneNumber),
-    FOREIGN KEY (customerPhone) REFERENCES client (phoneNumber)
+	ownerEmail varchar(50) NOT NULL,
+    customerEmail varchar(50) NOT NULL,
+    score int NOT NULL,
+    PRIMARY KEY (ownerEmail, customerEmail),
+    FOREIGN KEY (ownerEmail) REFERENCES client (email),
+    FOREIGN KEY (customerEmail) REFERENCES client (email)
 );
 
 -- property review table
 
 DROP TABLE IF EXISTS propertyReview;
 CREATE TABLE propertyReview (
-	customerPhone char(12) NOT NULL,
-    propertyOwner char(12) NOT NULL,
-    propertyName varchar(50) NOT NULL,
-    content varchar(50) NOT NULL,
-    score float NOT NULL,
-    PRIMARY KEY (customerPhone, propertyOwner, propertyName),
-    FOREIGN KEY (customerPhone) REFERENCES client (phoneNumber),
-    FOREIGN KEY (propertyOwner) REFERENCES property (ownerPhone),
+	propertyName varchar(50) NOT NULL,
+    ownerEmail varchar(50) NOT NULL,
+	customerEmail varchar(50) NOT NULL,
+    content varchar(500) NOT NULL,
+    score int NOT NULL,
+    PRIMARY KEY (customerEmail, ownerEmail, propertyName),
+    FOREIGN KEY (customerEmail) REFERENCES client (email),
+    FOREIGN KEY (ownerEmail) REFERENCES property (email),
     FOREIGN KEY (propertyName) REFERENCES property (name)
 );
 
@@ -189,15 +191,15 @@ CREATE TABLE propertyReview (
 
 DROP TABLE IF EXISTS propertyReservation;
 CREATE TABLE propertyReservation (
-	customerPhone char(12) NOT NULL,
-    propertyOwner char(12) NOT NULL,
-    propertyName varchar(50) NOT NULL,
+	propertyName varchar(50) NOT NULL,
+    ownerEmail varchar(50) NOT NULL,
+	customerEmail varchar(50) NOT NULL,
     startDate date NOT NULL,
     endDate date NOT NULL,
     numGuests int NOT NULL,
-    PRIMARY KEY (customerPhone, propertyOwner, propertyName),
-    FOREIGN KEY (customerPhone) REFERENCES client (phoneNumber),
-    FOREIGN KEY (propertyOwner) REFERENCES property (ownerPhone),
+    PRIMARY KEY (propertyName, ownerEmail, customerEmail),
+    FOREIGN KEY (customerEmail) REFERENCES client (email),
+    FOREIGN KEY (ownerEmail) REFERENCES property (email),
     FOREIGN KEY (propertyName) REFERENCES property (name)
 );
 
@@ -205,12 +207,12 @@ CREATE TABLE propertyReservation (
 
 DROP TABLE IF EXISTS closeAirport;
 CREATE TABLE closeAirport (
-	propertyOwner char(12) NOT NULL,
+	ownerEmail varchar(50) NOT NULL,
     propertyName varchar(50) NOT NULL,
     airport char(3) NOT NULL,
     distance float NOT NULL,
-    PRIMARY KEY (propertyOwner, propertyName, airport),
-    FOREIGN KEY (propertyOwner) REFERENCES property (ownerPhone),
+    PRIMARY KEY (ownerEmail, propertyName, airport),
+    FOREIGN KEY (ownerEmail) REFERENCES property (email),
     FOREIGN KEY (propertyName) REFERENCES property (name),
     FOREIGN KEY (airport) REFERENCES airport (airportID)
 );
@@ -308,47 +310,149 @@ INSERT INTO client VALUES
 -- PROPERTIES INSERT STATEMENTS
 -- -----------------------------
 
+INSERT INTO property VALUES
+("scooper3@gmail.com", "Atlanta Great Property", "This is right in the middle of Atlanta near many attractions!", 4, 600, "2nd St", "ATL", "GA", "30008"),
+("gburdell3@gmail.com", "House near Georgia Tech", "Super close to bobby dodde stadium!", 3, 275, "North Ave", "ATL", "GA", "30008"),
+("cbing10@gmail.com", "New York City Property", "A view of the whole city. Great property!", 2, 750, "123 Main St", "NYC", "NY", "10008"),
+("mgeller5@gmail.com", "Statue of Libery Property", "You can see the statue of liberty from the porch", 5, 1000, "1st St", "NYC", "NY", "10009"),
+("arthurread@gmail.com", "Los Angeles Property", null, 3, 700, "10th St", "LA", "CA", "90008"),
+("arthurread@gmail.com", "LA Kings House", "This house is super close to the LA kinds stadium!", 4, 750, "Kings St", "La", "CA", "90011"),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "Email", 12, 900, "Golden Bridge Pkwt", "San Jose", "CA", "90001"),
+("lebron6@gmail.com", "LA Lakers Property", "This house is right near the LA lakers stadium. You might even meet Lebron James!", 4, 850, "Lebron Ave", "LA", "CA", "90011"),
+("hwmit@gmail.com", "Chicago Blackhawks House", "This is a great property!", 3, 775, "Blackhawks St", "Chicago", "IL", "60176"),
+("mj23@gmail.com", "Chicago Romantic Getaway", "This is a great property!", 2, 1050, "23rd Main St", "Chicago", "IL", "60176"),
+("msmith5@gmail.com", "Beautiful Beach Property", "You can walk out of the house and be on the beach!", 2, 975, "456 Beach Ave", "Miami", "FL", "33101"),
+("ellie2@gmail.com", "Family Beach House", "You can literally walk onto the beach and see it from the patio!", 6, 850, "1132 Beach Ave", "Miami", "FL", "33101"),
+("mscott22@gmail.com", "Texas Roadhouse", "This property is right in the center of Dallas, Texas!", 3, 450, "17th Street", "Dallas", "TX", "75043"),
+("mscott22@gmail.com", "Texas Longhorns House", "You can walk to the longhorns stadium from here!", 10, 600, "1125 Longhorns Way", "Dallas", "TX", "75001");
+
+
+INSERT INTO propertyAmenities VALUES
+("scooper3@gmail.com", "Atlanta Great Property", "A/C & Heating"),
+("scooper3@gmail.com", "Atlanta Great Property", "Pets allowed"),
+("scooper3@gmail.com", "Atlanta Great Property", "Wifi & TV"),
+("scooper3@gmail.com", "Atlanta Great Property", "Washer and Dryer"),
+("gburdell3@gmail.com", "House near Georgia Tech", "Wifi & TV"),
+("gburdell3@gmail.com", "House near Georgia Tech", "Washer and Dryer"),
+("gburdell3@gmail.com", "House near Georgia Tech", "Full Kitchen"),
+("cbing10@gmail.com", "New York City Property", "A/C & Heating"),
+("cbing10@gmail.com", "New York City Property", "Wifi & TV"),
+("mgeller5@gmail.com", "Statue of Libery Property", "A/C & Heating"),
+("mgeller5@gmail.com", "Statue of Libery Property", "Wifi & TV"),
+("arthurread@gmail.com", "Los Angeles Property", "A/C & Heating"),
+("arthurread@gmail.com", "Los Angeles Property", "Pets allowed"),
+("arthurread@gmail.com", "Los Angeles Property", "Wifi & TV"),
+("arthurread@gmail.com", "LA Kings House", "A/C & Heating"),
+("arthurread@gmail.com", "LA Kings House", "Wifi & TV"),
+("arthurread@gmail.com", "LA Kings House", "Washer and Dryer"),
+("arthurread@gmail.com", "LA Kings House", "Full Kitchen"),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "A/C & Heating"),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "Pets allowed"),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "Wifi & TV"),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "Washer and Dryer"),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "Full Kitchen"),
+("lebron6@gmail.com", "LA Lakers Property", "A/C & Heating"),
+("lebron6@gmail.com", "LA Lakers Property", "Wifi & TV"),
+("lebron6@gmail.com", "LA Lakers Property", "Washer and Dryer"),
+("lebron6@gmail.com", "LA Lakers Property", "Full Kitchen"),
+("hwmit@gmail.com", "Chicago Blackhawks House", "A/C & Heating"),
+("hwmit@gmail.com", "Chicago Blackhawks House", "Wifi & TV"),
+("hwmit@gmail.com", "Chicago Blackhawks House", "Washer and Dryer"),
+("hwmit@gmail.com", "Chicago Blackhawks House", "Full Kitchen"),
+("mj23@gmail.com", "Chicago Romantic Getaway", "A/C & Heating"),
+("mj23@gmail.com", "Chicago Romantic Getaway", "Wifi & TV"),
+("msmith5@gmail.com", "Beautiful Beach Property", "A/C & Heating"),
+("msmith5@gmail.com", "Beautiful Beach Property", "Wifi & TV"),
+("msmith5@gmail.com", "Beautiful Beach Property", "Washer and Dryer"),
+("ellie2@gmail.com", "Family Beach House", "A/C & Heating"),
+("ellie2@gmail.com", "Family Beach House", "Pets allowed"),
+("ellie2@gmail.com", "Family Beach House", "Wifi & TV"),
+("ellie2@gmail.com", "Family Beach House", "Washer and Dryer"),
+("ellie2@gmail.com", "Family Beach House", "Full Kitchen"),
+("mscott22@gmail.com", "Texas Roadhouse", "A/C & Heating"),
+("mscott22@gmail.com", "Texas Roadhouse", "Pets allowed"),
+("mscott22@gmail.com", "Texas Roadhouse", "Wifi & TV"),
+("mscott22@gmail.com", "Texas Roadhouse", "Washer and Dryer"),
+("mscott22@gmail.com", "Texas Longhorns House", "A/C & Heating"),
+("mscott22@gmail.com", "Texas Longhorns House", "Pets allowed"),
+("mscott22@gmail.com", "Texas Longhorns House", "Wifi & TV"),
+("mscott22@gmail.com", "Texas Longhorns House", "Washer and Dryer"),
+("mscott22@gmail.com", "Texas Longhorns House", "Full Kitchen");
+
+INSERT INTO closeAirport VALUES
+("scooper3@gmail.com", "Atlanta Great Property", "ATL", 12),
+("gburdell3@gmail.com", "House near Georgia Tech", "ATL", 7),
+("cbing10@gmail.com", "New York City Property", "JFK", 10),
+("mgeller5@gmail.com", "Statue of Libery Property", "JFK", 8),
+("cbing10@gmail.com", "New York City Property", "LGA", 25),
+("mgeller5@gmail.com", "Statue of Libery Property", "LGA", 19),
+("arthurread@gmail.com", "Los Angeles Property", "LAX", 9),
+("arthurread@gmail.com", "LA Kings House", "LAX", 12),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "SJC", 8),
+("arthurread@gmail.com", "Beautiful San Jose Mansion", "LAX", 30),
+("lebron6@gmail.com", "LA Lakers Property", "LAX", 6),
+("hwmit@gmail.com", "Chicago Blackhawks House", "ORD", 11),
+("mj23@gmail.com", "Chicago Romantic Getaway", "ORD", 13),
+("msmith5@gmail.com", "Beautiful Beach Property", "MIA", 21),
+("ellie2@gmail.com", "Family Beach House", "MIA", 19),
+("mscott22@gmail.com", "Texas Roadhouse", "DFW", 8),
+("mscott22@gmail.com", "Texas Longhorns House", "DFW", 17);
+
 -- ---------------------------
 -- BOOKINGS INSERT STATEMENTS
 -- ---------------------------
+
+INSERT INTO flightBooking VALUES
+("swilson@gmail.com", "JetBlue Airways", "5", 3),
+("aray@tiktok.com", "Delta Airlines", "1", 2),
+("bshelton@gmail.com", "United Airlines", "4", 4),
+("lbryan@gmail.com", "WestJet", "7", 2),
+("tswift@gmail.com", "WestJet", "7", 2),
+("jseinfeld@gmail.com", "WestJet", "7", 4),
+("maddiesmith@gmail.com", "Interjet", "8", 2),
+("cbing10@gmail.com", "Southwest Airlines", "2", 2),
+("hwmit@gmail.com", "Southwest Airlines", "2", 5);
+
+INSERT INTO propertyReservation VALUES
+("House near Georgia Tech", "gburdell3@gmail.com", "swilson@gmail.com", "2021-10-19", "2021-10-25", 3),
+("New York City Property", "cbing10@gmail.com", "aray@tiktok.com", "2021-10-18", "2021-10-23", 2),
+("New York City Property", "cbing10@gmail.com", "cdemilio@tiktok.com", "2021-10-24", "2021-10-30", 2),
+("Statue of Libery Property", "mgeller5@gmail.com", "bshelton@gmail.com", "2021-10-18", "2021-10-22", 4),
+("Los Angeles Property", "arthurread@gmail.com", "lbryan@gmail.com", "2021-10-19", "2021-10-25", 2),
+("Beautiful San Jose Mansion", "arthurread@gmail.com", "tswift@gmail.com", "2021-10-19", "2021-10-22", 10),
+("LA Lakers Property", "lebron6@gmail.com", "jseinfeld@gmail.com", "2021-10-19", "2021-10-24", 4),
+("Chicago Blackhawks House", "hwmit@gmail.com", "maddiesmith@gmail.com", "2021-10-19", "2021-10-23", 2),
+("Chicago Romantic Getaway", "mj23@gmail.com", "aray@tiktok.com", "2021-11-01", "2021-11-07", 2),
+("Beautiful Beach Property", "msmith5@gmail.com", "cbing10@gmail.com", "2021-10-18", "2021-10-25", 2),
+("Family Beach House", "ellie2@gmail.com", "hwmit@gmail.com", "2021-10-18", "2021-10-28", 5);
 
 -- --------------------------------------
 -- RATINGS AND REVIEWS INSERT STATEMENTS
 -- --------------------------------------
 
+INSERT INTO propertyReview VALUES
+("House near Georgia Tech", "gburdell3@gmail.com", "swilson@gmail.com", "This was so much fun. I went and saw the coke factory, the falcons play, GT play, and the Georgia aquarium. Great time! Would highly recommend!", 5),
+("New York City Property", "cbing10@gmail.com", "aray@tiktok.com", "This was the best 5 days ever! I saw so much of NYC!", 5),
+("Statue of Libery Property", "mgeller5@gmail.com", "bshelton@gmail.com", "This was truly an excellent experience. I really could see the Statue of Liberty from the property!", 4),
+("Los Angeles Property", "arthurread@gmail.com", "lbryan@gmail.com", "I had an excellent time!", 4),
+("Beautiful San Jose Mansion", "arthurread@gmail.com", "tswift@gmail.com", "We had a great time, but the house wasn't fully cleaned when we arrived", 3),
+("LA Lakers Property", "lebron6@gmail.com", "jseinfeld@gmail.com", "I was disappointed that I did not meet lebron james", 2),
+("Chicago Blackhawks House", "hwmit@gmail.com", "maddiesmith@gmail.com", "This was awesome! I met one player on the chicago blackhawks!", 5);
 
+INSERT INTO ownerRating VALUES
+("gburdell3@gmail.com", "swilson@gmail.com", 5),
+("cbing10@gmail.com", "aray@tiktok.com", 5),
+("mgeller5@gmail.com", "bshelton@gmail.com", 4),
+("arthurread@gmail.com", "lbryan@gmail.com", 4),
+("arthurread@gmail.com", "tswift@gmail.com", 3),
+("lebron6@gmail.com", "jseinfeld@gmail.com", 2),
+("hwmit@gmail.com", "maddiesmith@gmail.com", 5);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+INSERT INTO customerRating VALUES
+("gburdell3@gmail.com", "swilson@gmail.com", 5),
+("cbing10@gmail.com", "aray@tiktok.com", 5),
+("mgeller5@gmail.com", "bshelton@gmail.com", 3),
+("arthurread@gmail.com", "lbryan@gmail.com", 4),
+("arthurread@gmail.com", "tswift@gmail.com", 4),
+("lebron6@gmail.com", "jseinfeld@gmail.com", 1),
+("hwmit@gmail.com", "maddiesmith@gmail.com", 2);
