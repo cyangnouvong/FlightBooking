@@ -64,8 +64,7 @@ CREATE TABLE property (
     nightlyCostPerPerson float NOT NULL,
     capacity int NOT NULL,
     description varchar(50) NOT NULL,
-    PRIMARY KEY (ownerPhone),
-    UNIQUE KEY (name),
+    PRIMARY KEY (name, ownerPhone),
     FOREIGN KEY (ownerPhone) REFERENCES client (phoneNumber)
 );
 
@@ -87,7 +86,7 @@ DROP TABLE IF EXISTS airport;
 CREATE TABLE airport (
 	airportID char(3) NOT NULL,
     name varchar(50) NOT NULL,
-    timeZone timestamp NOT NULL,
+    timeZone char(3) NOT NULL,
     street varchar(50) NOT NULL,
     city varchar(50) NOT NULL,
     state char(2) NOT NULL,
@@ -97,7 +96,7 @@ CREATE TABLE airport (
 
 -- airport attractions table
 
-DROP TABLE IF EXISTS airportAttrations;
+DROP TABLE IF EXISTS airportAttractions;
 CREATE TABLE airportAttractions (
 	airport char(3) NOT NULL,
     attraction varchar(50) NOT NULL,
@@ -119,16 +118,15 @@ CREATE TABLE airline (
 DROP TABLE IF EXISTS flight;
 CREATE TABLE flight (
 	airlineName varchar(50) NOT NULL,
-    flightNum char(5) NOT NULL,
-    departTime timestamp NOT NULL,
-    arriveTime timestamp NOT NULL,
+    flightNum varchar(5) NOT NULL,
+    departureAirport char(3) NOT NULL,
+    arrivalAirport char(3) NOT NULL,
+    departTime time NOT NULL,
+    arriveTime time NOT NULL,
     date date NOT NULL,
     costPerSeat float NOT NULL,
     capacity int NOT NULL,
-    departureAirport char(3) NOT NULL,
-    arrivalAirport char(3) NOT NULL,
-    PRIMARY KEY (airlineName),
-    UNIQUE KEY (flightNum),
+    PRIMARY KEY (flightNum, airlineName),
     FOREIGN KEY (airlineName) REFERENCES airline (name),
     FOREIGN KEY (departureAirport) REFERENCES airport (airportID),
     FOREIGN KEY (arrivalAirport) REFERENCES airport (airportID)
@@ -216,6 +214,75 @@ CREATE TABLE closeAirport (
     FOREIGN KEY (propertyName) REFERENCES property (name),
     FOREIGN KEY (airport) REFERENCES airport (airportID)
 );
+
+-- -------------------------------------
+-- AIR TRANSPORTATION INSERT STATEMENTS 
+-- -------------------------------------
+
+INSERT INTO airport VALUES
+("ATL", "Atlanta Hartsfield Jackson Airport", "EST", "6000 N Terminal Pkwy", "Atlanta", "GA", "30320"),
+("JFK", "John F Kennedy International Airport", "EST", "455 Airport Ave", "Queens", "NY", "11430"),
+("LGA", "Laguardia Airport", "EST", "790 Airport St", "Queens", "NY", "11371"),
+("LAX", "Lost Angeles International Airport", "PST", "1 World Way", "Los Angeles", "CA", "90045"),
+("SJC", "Norman Y. Mineta San Jose International Airport", "PST", "1702 Airport Blvd", "San Jose", "CA", "95110"),
+("ORD", "O'Hare International Airport", "CST", "10000 W O'Hare Ave", "Chicago", "IL", "60666"),
+("MIA", "Miami International Airport", "EST", "2100 NW 42nd Ave", "Miami", "FL", "33126"),
+("DFW", "Dallas International Airport", "CST", "2400 Aviation DR", "Dallas", "TX", "75261");
+
+INSERT INTO airline VALUES
+("Delta Airlines", 4.7),
+("Southwest Airlines", 4.4),
+("American Airlines", 4.6),
+("United Airlines", 4.2),
+("JetBlue Airways", 3.6),
+("Spirit Airlines", 3.3),
+("WestJet", 3.9),
+("Interjet", 3.7);
+
+INSERT INTO flight VALUES
+("Delta Airlines", "1", "ATL", "JFK", "10:00:00", "12:00", "2021-10-18", 400, 150),
+("Southwest Airlines", "2", "ORD", "MIA", "10:30:00", "14:30:00", "2021-10-18", 350, 125),
+("American Airlines", "3", "MIA", "DFW", "13:00:00", "16:00:00",  "2021-10-18", 350, 125),
+("United Airlines", "4", "ATL", "LGA", "16:30:00", "18:30:00", "2021-10-18", 400, 100),
+("JetBlue Airways", "5", "LGA", "ATL", "11:00:00", "13:00:00", "2021-10-19", 400, 130),
+("Spirit Airlines", "6", "SJC", "ATL", "12:30:00", "21:30:00", "2021-10-19", 650, 140),
+("WestJet", "7", "LGA", "SJC", "13:00:00", "16:00:00", "2021-10-19", 700, 100),
+("Interjet", 8, "MIA", "ORD", "19:30:00", "21:30:00", "2021-10-19", 350, 125),
+("Delta Airlines", "9", "JFK", "ATL", "8:00:00", "10:00:00", "2021-10-20", 375, 150),
+("Delta Airlines", "10", "LAX", "ATL", "9:15:00", "18:15:00", "2021-10-20", 700, 110),
+("Southwest Airlines", "11", "LAX", "ORD", "12:07:00", "19:07:00", "2021-10-20", 600, 95),
+("United Airlines", "12", "MIA", "ATL", "15:35:00", "17:35:00", "2021-10-20", 275, 115);
+
+INSERT INTO airportAttractions VALUES
+("ATL", "The Coke Factory"),
+("ATL", "The Georgia Aquarium"),
+("JFK", "The Statue of Liberty"),
+("JFK", "The Empire State Building"),
+("LGA", "The Statue of Liberty"),
+("LGA", "The Empire State Building"),
+("LAX", "Lost Angeles Lakers Stadium"),
+("LAX", "Los Angeles Kings Stadium"),
+("SJC", "Winchester Mystery House"),
+("SJC", "San Jose Earthquakes Soccer Team"),
+("ORD", "Chicago Blackhawks Stadium"),
+("ORD", "Chicago Bulls Stadium"),
+("MIA", "Crandon Park Beach"),
+("MIA", "Miami Heat Basketball Stadium"),
+("DFW", "Texas Longhorns Stadium"),
+("DFW", "The Original Texas Roadhouse");
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
