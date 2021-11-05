@@ -139,7 +139,7 @@ CREATE TABLE flight (
 
 DROP TABLE IF EXISTS flightBooking;
 CREATE TABLE flightBooking (
-	email char(50) NOT NULL,
+	email varchar(50) NOT NULL,
     airlineName varchar(50) NOT NULL,
     flightNum char(5) NOT NULL,
     numSeats int NOT NULL,
