@@ -93,7 +93,8 @@ CREATE TABLE airport (
     city varchar(50) NOT NULL,
     state char(2) NOT NULL,
     zip char(5) NOT NULL,
-    PRIMARY KEY (airportID)
+    PRIMARY KEY (airportID),
+    UNIQUE KEY (name)
 );
 
 -- airport attractions table
