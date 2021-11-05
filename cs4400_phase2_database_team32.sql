@@ -26,7 +26,7 @@ USE travel;
 DROP TABLE IF EXISTS admin;
 CREATE TABLE admin (
 	email varchar(50) NOT NULL,
-    fname varchar(100) NOT NULL,
+    fname varchar(100),
     lname varchar(100),
     password varchar(50) NOT NULL,
     PRIMARY KEY (email)
@@ -37,7 +37,7 @@ CREATE TABLE admin (
 DROP TABLE IF EXISTS client;
 CREATE TABLE client (
 	email varchar(50) NOT NULL,
-    fname varchar(100) NOT NULL,
+    fname varchar(100),
     lname varchar(100),
     password varchar(50) NOT NULL,
     phoneNumber char(12) NOT NULL,
