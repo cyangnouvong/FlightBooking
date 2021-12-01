@@ -367,7 +367,20 @@ create or replace view view_customers (
 -- view customers
 select 'col1', 'col2', 'col3', 'col4', 'col5' from customer;
 
--- THIS ONE IS WRONG LOL but if you figure this one out then you've basically figured out view_customers so
+-- TEMP VIEWS FOR VIEW_OWNERS
+
+create or replace view temp_view_1 as
+	select accounts.Email as email_1, 
+		concat(First_Name, " ", Last_Name) as full_name,
+		avg(Score) as avgScore 
+    from accounts join customers_rate_owners where accounts.Email = customers_rate_owners.Owner_Email;
+
+create or replace view temp_view_2 as
+	select property.Owner_Email as email_1, 
+		count(Property_Name) as numProperties, 
+        avg(Score) as avgPropertyScore 
+	from property natural join review; 
+	
 -- ID: 8b
 -- Name: view_owners
 create or replace view view_owners (
@@ -376,10 +389,7 @@ create or replace view view_owners (
     num_properties_owned, 
     avg_property_rating
 ) as
-select concat(First_Name, " ", Last_Name), avg(Score) from accounts join customers_rate_owners where accounts.Email = customers_rate_owners.Owner_Email
-	union
-select count(Property_Name), avg(Score) from property natural join review;
-    
+	select full_name, avgScore, numProperties, avgPropertyScore from temp_view_1 natural join temp_view_2;
 
 -- ID: 9a
 -- Name: process_date
