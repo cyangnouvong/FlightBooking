@@ -31,12 +31,24 @@ sp_main: begin
 -- credit card number must be unique
 -- phone number must be unique
 -- if customer already exists as an account/client but not customer, add them as customer to indicate they are both an owner and a customer
- 
 
+-- HELP: do we need to check if their email matches their phone number in clients?
+if (i_email in (select Email from Clients)) then
+	if (i_email in (select Email from Customer)) then leave sp_main; end if;
+    if (i_cc_number in (select CcNumber from Customer)) then leave sp_main; end if;
+    insert into Customer values(i_email, i_cc_number, i_cvv, i_exp_date, i_location);
+elseif (i_phone_number in (select Phone_Number from Clients)) then leave sp_main;
+else 
+	if (i_cc_number in (select CcNumber from Customer)) then leave sp_main; end if;
+	insert into Accounts values(i_email, i_first_name, i_last_name, i_password);
+    insert into Clients values(i_email, i_phone_number);
+    insert into Customer values(i_email, i_cc_number, i_cvv, i_exp_date, i_location);
+end if;
 
 end //
 delimiter ;
 
+-- call register_customer('keelyculb@gmail.com', 'Chandler', 'Bing', 'pass', '555-456-7890', '1111-2222-3333-4444', '123', '2022-01-01', 'Atlanta');
 
 -- ID: 1b
 -- Name: register_owner
@@ -52,6 +64,16 @@ create procedure register_owner (
 sp_main: begin
 -- TODO: Implement your solution here
 
+-- HELP: do we need to check if their email matches their phone number in clients?
+if (i_email in (select Email from Clients)) then
+	if (i_email in (select Email from Owners)) then leave sp_main; end if;
+    insert into Owners values(i_email);
+elseif (i_phone_number in (select Phone_Number from Clients)) then leave sp_main;
+else 
+	insert into Accounts values(i_email, i_first_name, i_last_name, i_password);
+    insert into Clients values(i_email, i_phone_number);
+end if;
+
 end //
 delimiter ;
 
@@ -65,6 +87,22 @@ create procedure remove_owner (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if owner has properties, leave
+if (i_owner_email in (select Owner_Email from Property)) then leave sp_main; end if;
+
+-- delete their reviews of customers
+delete from Owners_Rate_Customers where Owner_Email = i_owner_email;
+-- delete reviews of them by customers
+delete from Customers_Rate_Owners where Owner_Email = i_owner_email;
+-- if owner is customer, delete owner only
+-- else delete client and account as well
+if (i_owner_email not in (select Email from Customers)) then
+	delete from Clients where Email = i_owner_email;
+    delete from Accounts where Email = i_owner_email;
+end if;	
+delete from Owners where Email = i_owner_email;
+
 
 end //
 delimiter ;
@@ -89,6 +127,15 @@ create procedure schedule_flight (
 sp_main: begin
 -- TODO: Implement your solution here
 
+-- if airline already has that flight num, leave
+if (i_flight_num in (select Flight_Num from Flight where Airline_Name = i_airline_name)) then leave sp_main; end if;
+-- if to airport is same as from airport, leave
+if (i_to_airport = i_from_airport) then leave sp_main; end if;
+-- if date is in future, add flight
+if (i_flight_date > i_current_date) then 
+	insert into Flight values (i_flight_num, i_airline_name, i_from_airport, i_to_airport, i_departure_time, i_arrival_time, i_flight_date, i_cost, i_capacity);
+end if;
+
 end //
 delimiter ;
 
@@ -104,6 +151,13 @@ create procedure remove_flight (
 ) 
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if date not in future, leave
+if (i_current_date >= (select Flight_Date from Flight where Flight_Num = i_flight_num and Airline_Name = i_airline_name)) then leave sp_main; end if;
+-- remove all bookings associated with flight
+delete from Book where (Flight_Num = i_flight_num and Airline_Name = i_airline_name);
+-- remove flight
+delete from Flight where (Flight_Num = i_flight_num and Airline_Name = i_airline_name);
 
 end //
 delimiter ;
@@ -123,6 +177,35 @@ create procedure book_flight (
 sp_main: begin
 -- TODO: Implement your solution here
 
+-- HELP: will new i_num_seats always be greater? OR could it be smaller?
+-- HELP: does date have to strictly be in future or could it be same day?
+
+set @seats_remaining = calc_seats_remaining(i_flight_num, i_airline_name);
+
+-- if num seats remaining is less than num seats booked, leave
+if (@seats_remaining < i_num_seats) then leave sp_main; end if;
+-- if date not in future, leave
+if (i_current_date >= (select Flight_Date from Flight where Flight_Num = p_flight_num and Airline_Name = p_airline_name)) then leave sp_main; end if;
+-- if count with email, flight num, and airline name > 0, update num seats if enough available and booking not cancelled
+if ((select count(Flight_Num) from Book where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name) > 0) then
+	if (select Was_Cancelled from Book where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name) then leave sp_main; end if;
+    if (@seats_remaining >= (i_num_seats - (select count(Flight_Num) from Book where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name))) then
+		update Book set Num_Seats = i_num_seats where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name;
+	end if;
+-- if count of non-cancelled flights on that day = 0, book flight
+elseif ((select count(Flight_Num) from Book, Flight where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name and Was_Cancelled = 0) = 0) then
+	insert into Book values (i_customer_email, i_flight_num, i_airline_name, i_num_seats, 0);
+end if;
+
+end //
+delimiter ;
+
+drop function if exists calc_seats_remaining;
+delimiter //
+create function calc_seats_remaining(p_flight_num char(5), p_airline_name varchar(50))
+	returns integer deterministic
+begin
+	return (select Capacity from Flight where Flight_Num = p_flight_num and Airline_Name = p_airline_name) - (select sum(Num_Seats) from Book where Flight_Num = p_flight_num and Airline_Name = p_airline_name and Was_Cancelled = 0);
 end //
 delimiter ;
 
@@ -138,6 +221,13 @@ create procedure cancel_flight_booking (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if customer not booked this flight, leave
+if ((select count(Flight_Num) where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name) = 0) then leave sp_main; end if;
+-- if date not in future, leave
+if (i_current_date >= (select Flight_Date from Flight where Flight_Num = i_flight_num and Airline_Name = i_airline_name)) then leave sp_main; end if;
+-- set cancelled flag to 1
+update Book set Was_Cancelled = 1 where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name;
 
 end //
 delimiter ;
@@ -176,6 +266,17 @@ create procedure add_property (
 ) 
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if address not unique, leave
+if ((select count(Property_Name) from Property where Street = i_street and City = i_city and State = i_state and Zip = i_zip) > 0) then leave sp_main; end if;
+-- if combo of property name and owner's email not unique, leave
+if (i_property_name in (select Property_Name from Property where Owner_Email = i_owner_email)) then leave sp_main; end if;
+-- insert into property
+insert into Property values(i_property_name, i_owner_email, i_description, i_capacity, i_cost, i_street, i_city, i_state, i_zip);
+-- if nearest airport given and valid (check if exists in airport?), add to is close to table
+if (i_nearest_airport_id is not null and i_dist_to_airport is not null and i_nearest_airport_id in (select Airport_Id from Airport)) then
+	insert into Is_Close_To values(i_property_name, i_owner_email, i_nearest_airport_id, i_dist_to_airport);
+end if;
   
 end //
 delimiter ;
