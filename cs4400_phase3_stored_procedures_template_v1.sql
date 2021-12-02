@@ -396,16 +396,14 @@ create procedure customer_review_property (
 sp_main: begin
 -- TODO: Implement your solution here
 
--- if no booking for this customer, leave
-if ((select count(Start_Date) from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email) = 0) then leave sp_main; end if;
--- if current day before start date, leave
-if (i_current_date < (select Start_Date from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email)) then leave sp_main; end if;
--- if booking cancelled, leave
-if (select Was_Cancelled from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email) then leave sp_main; end if;
--- if combo of property, owner, and customer not unique, leave
-if (i_customer_email in (select Customer from Review where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email)) then leave sp_main; end if;
+-- if customer has reservation for property that started in past and wasn't cancelled
+if (i_customer_email in (select Customer from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Was_Cancelled = 0 and Start_Date <= i_current_date)) then
+-- if customer hasn't already reviewed property
+	if (i_customer_email not in (select Customer from Review where Property_Name = i_property_name and Owner_Email = i_owner_email)) then
 -- insert review
-insert into Review values(i_property_name, i_owner_email, i_customer_email, i_content, i_score);
+		insert into Review values(i_property_name, i_owner_email, i_customer_email, i_content, i_score);
+	end if;
+end if;
     
 end //
 delimiter ;
@@ -443,10 +441,29 @@ sp_main: begin
         total_booking_cost decimal(6,2),
         rating_score int,
         review varchar(500)
-    ) as
-    -- TODO: replace this select query with your solution
-    select 'col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7', 'col8' from reserve;
+    );
+    
+    if (i_property_name in (select Property_Name from Property where Owner_Email = i_owner_email)) then
+		insert into view_individual_property_reservations (
+			select i_property_name, r.Start_Date, r.End_Date, r.Customer, c.Phone_Number, calc_total_cost(r.Num_Guests, r.Start_Date, r.End_Date, p.Cost, r.Was_Cancelled), v.Score, v.Content
+            from Reserve r join Customer c join Property p left join Review v 
+            on r.Property_Name = v.Property_Name and r.Owner_Email = v.Owner_Email and r.Customer = c.Email and p.Property_Name = r.Property_Name and p.Owner_Email = r.Owner_Email
+		);
+    end if;
 
+end //
+delimiter ;
+
+drop function if exists calc_total_cost;
+delimiter //
+create function calc_total_cost(p_num_guests int(11), p_start_date date, p_end_date date, p_nightly_cost decimal(6,2), p_was_cancelled tinyint(1))
+	returns decimal
+begin
+	set @total = (p_end_date - p_start_date + 1) * p_num_guests * p_nightly_cost;
+    
+    if (p_was_cancelled) then return (@total * 0.2); end if;
+    return @total;
+    
 end //
 delimiter ;
 
@@ -464,8 +481,16 @@ create procedure customer_rates_owner (
 sp_main: begin
 -- TODO: Implement your solution here
 
-
-
+-- if customer or owner don't exist, leave
+if (i_owner_email not in (select Email from Owners)) then leave sp_main; end if;
+if (i_customer_email not in (select Email from Customer)) then leave sp_main; end if;
+-- if customer stayed at property owned by owner that was in the past and not cancelled
+if (i_customer_email in (select Customer from Reserve where Owner_Email = i_owner_email and Start_Date <= i_current_date and Was_Cancelled = 0)) then
+-- if customer hasn't already rated owner
+	if (i_customer_email not in (select Customer from Customers_Rate_Owners where Owner_Email = i_owner_email)) then
+		insert into Customers_Rate_Owners values(i_customer_email, i_owner_email, i_score);
+	end if;
+end if;
 
 end //
 delimiter ;
@@ -483,6 +508,17 @@ create procedure owner_rates_customer (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if customer or owner don't exist, leave
+if (i_owner_email not in (select Email from Owners)) then leave sp_main; end if;
+if (i_customer_email not in (select Email from Customer)) then leave sp_main; end if;
+-- if customer stayed at property owned by owner that was in the past and not cancelled
+if (i_customer_email in (select Customer from Reserve where Owner_Email = i_owner_email and Start_Date <= i_current_date and Was_Cancelled = 0)) then
+-- if customer hasn't already rated owner
+	if (i_owner_email not in (select Owner_Email from Owners_Rate_Customers where Customer_Email = i_customer_email)) then
+		insert into Owners_Rate_Customers values(i_owner_email, i_customer_email, i_score);
+	end if;
+end if;
 
 end //
 delimiter ;
@@ -561,6 +597,22 @@ create procedure process_date (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- HELP: No clue if this works
+
+drop table if exists flight_reservations;
+create table flight_reservations(
+	Customer_Email varchar(50),
+    State char(2)
+) as 
+
+	(select c.Email, a.State
+    from Book b join Flight f join Customer c join Airport a 
+    on b.Flight_Num = f.Flight_Num and b.Airline_Name = f.Airline_Name and c.Email = b.Customer and a.Airport_Id = f.To_Airport 
+    where b.Was_Cancelled = 0 and f.Flight_Date = i_current_date
+);
+
+update Customer c set Location = (select f.State from flight_reservations f) where f.Customer_Email = c.Email;
     
 end //
 delimiter ;
