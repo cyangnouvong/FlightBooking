@@ -293,6 +293,17 @@ create procedure remove_property (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if booked for current day and not cancelled, leave
+if ((select count(Customer) from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and (Start_Date <= i_current_date and End_Date >= i_current_date) and Was_Cancelled = 0) > 0) then leave sp_main; end if;
+-- remove all bookings (past and future) associated with this property
+delete from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email;
+-- remove all reviews associated with this property
+delete from Review where Property_Name = i_property_name and Owner_Email = i_owner_email;
+-- remove all amenities associated with this property
+delete from Amenity where Property_Name = i_property_name and Owner_Email = i_owner_email;
+-- remove all entries in is close to associated with this property
+delete from Is_Close_To where Property_Name = i_property_name and Owner_Email = i_owner_email;
     
 end //
 delimiter ;
@@ -314,6 +325,32 @@ create procedure reserve_property (
 sp_main: begin
 -- TODO: Implement your solution here
 
+-- if combo of property name, owner email, and customer not unique, leave
+if ((select count(Start_Date) from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email) > 0) then leave sp_main; end if;
+-- if start date not in future, leave
+if (i_start_date <= i_current_date) then leave sp_main; end if;
+-- if guest has overlapping reservations, leave
+if ((select count(Property_Name) from Reserve where ((Start_Date <= i_start_date and End_Date >= i_start_date) or (Start_Date <= i_end_date and End_Date >= i_end_date))) > 0) then leave sp_main; end if;
+-- if property doesn't have enough capacity over the span of dates, leave
+set @curr_date = i_start_date;
+date_loop: loop
+	if (i_num_guests > calc_beds_remaining(i_property_name, i_owner_email, @curr_date)) then leave sp_main; end if;
+    set @curr_date = @curr_date + 1;
+    if (@curr_date > i_end_date) then leave date_loop; end if;
+end loop date_loop;
+-- add reservation
+insert into Reserve values(i_property_name, i_owner_email, i_customer_email, i_start_date, i_end_date, i_num_guests, 0);
+
+end //
+delimiter ;
+
+drop function if exists calc_beds_remaining;
+delimiter //
+create function calc_beds_remaining(p_property_name varchar(50), p_owner_email varchar(50), p_date date)
+	returns integer deterministic
+begin
+	return (select Capacity from Property where Property_Name = p_property_name and Owner_Email = i_owner_email) - (select sum(Num_Guests) from Reserve where Property_Name = p_property_name and Owner_Email = p_owner_email and (Start_Date <= p_date and End_Date >= p_date));
+    
 end //
 delimiter ;
 
@@ -330,6 +367,15 @@ create procedure cancel_property_reservation (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if customer hasn't booked property, leave
+if (i_customer_email not in (select Customer from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email)) then leave sp_main; end if;
+-- if reservation already cancelled, leave
+if (select Was_Cancelled from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email) then leave sp_main; end if;
+-- if start date passed or today, leave
+if (i_current_date >= (select Start_Date from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email)) then leave sp_main; end if;
+-- update cancelled
+update Reserve set Was_Cancelled = 1 where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email;
 
 end //
 delimiter ;
@@ -349,6 +395,17 @@ create procedure customer_review_property (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+-- if no booking for this customer, leave
+if ((select count(Start_Date) from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email) = 0) then leave sp_main; end if;
+-- if current day before start date, leave
+if (i_current_date < (select Start_Date from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email)) then leave sp_main; end if;
+-- if booking cancelled, leave
+if (select Was_Cancelled from Reserve where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email) then leave sp_main; end if;
+-- if combo of property, owner, and customer not unique, leave
+if (i_customer_email in (select Customer from Review where Property_Name = i_property_name and Owner_Email = i_owner_email and Customer = i_customer_email)) then leave sp_main; end if;
+-- insert review
+insert into Review values(i_property_name, i_owner_email, i_customer_email, i_content, i_score);
     
 end //
 delimiter ;
@@ -406,6 +463,9 @@ create procedure customer_rates_owner (
 )
 sp_main: begin
 -- TODO: Implement your solution here
+
+
+
 
 end //
 delimiter ;
