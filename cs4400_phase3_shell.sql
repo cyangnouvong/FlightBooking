@@ -72,7 +72,7 @@ elseif (i_phone_number in (select Phone_Number from Clients)) then leave sp_main
 else 
 	insert into Accounts values(i_email, i_first_name, i_last_name, i_password);
     insert into Clients values(i_email, i_phone_number);
-    insert into Owners values(i_email); -- cy added
+    insert into Owners values(i_email);
 end if;
 
 end //
@@ -98,12 +98,13 @@ delete from Owners_Rate_Customers where Owner_Email = i_owner_email;
 delete from Customers_Rate_Owners where Owner_Email = i_owner_email;
 -- if owner is customer, delete owner only
 -- else delete client and account as well
-if (i_owner_email not in (select Email from Customers)) then
+if (i_owner_email not in (select Email from Customer)) then
+	delete from Owners where Email = i_owner_email;
 	delete from Clients where Email = i_owner_email;
     delete from Accounts where Email = i_owner_email;
-end if;	
+    leave sp_main;
+end if;
 delete from Owners where Email = i_owner_email;
-
 
 end //
 delimiter ;
@@ -186,7 +187,7 @@ set @seats_remaining = calc_seats_remaining(i_flight_num, i_airline_name);
 -- if num seats remaining is less than num seats booked, leave
 if (@seats_remaining < i_num_seats) then leave sp_main; end if;
 -- if date not in future, leave
-if (i_current_date >= (select Flight_Date from Flight where Flight_Num = i_flight_num and Airline_Name = i_airline_name)) then leave sp_main; end if; -- cy change p to i
+if (i_current_date >= (select Flight_Date from Flight where Flight_Num = i_flight_num and Airline_Name = i_airline_name)) then leave sp_main; end if;
 -- if count with email, flight num, and airline name > 0, update num seats if enough available and booking not cancelled
 if ((select count(Flight_Num) from Book where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name) > 0) then
 	if (select Was_Cancelled from Book where Customer = i_customer_email and Flight_Num = i_flight_num and Airline_Name = i_airline_name) then leave sp_main; end if;
@@ -516,7 +517,7 @@ if (i_customer_email not in (select Email from Customer)) then leave sp_main; en
 -- if customer stayed at property owned by owner that was in the past and not cancelled
 if (i_customer_email in (select Customer from Reserve where Owner_Email = i_owner_email and Start_Date <= i_current_date and Was_Cancelled = 0)) then
 -- if customer hasn't already rated owner
-	if (i_owner_email not in (select Owner_Email from Owners_Rate_Customers where Customer_Email = i_customer_email)) then
+	if (i_owner_email not in (select Owner_Email from Owners_Rate_Customers where Customer = i_customer_email)) then
 		insert into Owners_Rate_Customers values(i_owner_email, i_customer_email, i_score);
 	end if;
 end if;
