@@ -622,34 +622,6 @@ create or replace view temp_view_2 as
         avg(Score) as avgPropertyScore 
 	from property natural join review; 
 	
--- TEMP VIEWS FOR VIEW_OWNERS
-
-create or replace view temp_view_0 as
-    select owners.Email as email, concat(First_Name, " ", Last_Name) as full_name from accounts natural join owners;
-
-select * from temp_view_0;
-
-create or replace view temp_view_1 as
-    select temp_view_0.email as Owner_Email, 
-        temp_view_0.full_name as full_name,
-        avg(Score) as avg_rating 
-    from temp_view_0 left outer join customers_rate_owners on temp_view_0.email = customers_rate_owners.Owner_Email
-    group by temp_view_0.email;
-
-select * from temp_view_1;
-
-create or replace view temp_view_11 as
-    select temp_view_1.Owner_Email as Owner_Email_11, count(property.Owner_Email) as numProperties from property 
-    right outer join temp_view_1 on temp_view_1.Owner_Email = property.Owner_Email group by temp_view_1.Owner_Email;
-select * from temp_view_11;
-
-create or replace view temp_view_2 as
-    select temp_view_11.Owner_Email_11 as email_2, 
-        temp_view_11.numProperties,
-        avg(Score) as avgPropertyScore 
-    from temp_view_11 left outer join review on temp_view_11.Owner_Email_11 = review.Owner_Email group by temp_view_11.Owner_Email_11;
-select * from temp_view_2;
-    
 -- ID: 8b
 -- Name: view_owners
 create or replace view view_owners (
@@ -658,8 +630,7 @@ create or replace view view_owners (
     num_properties_owned, 
     avg_property_rating
 ) as
-    select full_name, avg_rating, numProperties, avgPropertyScore from temp_view_1 
-    left join temp_view_2 on temp_view_1.Owner_Email = temp_view_2.email_2;
+	select full_name, avgScore, numProperties, avgPropertyScore from temp_view_1 natural join temp_view_2;
 
 -- ID: 9a
 -- Name: process_date
