@@ -671,48 +671,17 @@ create procedure process_date (
 sp_main: begin
 -- TODO: Implement your solution here
 
--- HELP: No clue if this works
-
-create table temp (
-    Customer VARCHAR(50) NOT NULL,
-    Flight_Num CHAR(5) NOT NULL,
-    Airline_Name VARCHAR(50) NOT NULL,
-    Num_Seats INT NOT NULL CHECK (Num_Seats > 0),
-    Was_Cancelled BOOLEAN NOT NULL,
-    rowCount INT,
-
-    PRIMARY KEY (Customer, Flight_Num, Airline_Name),
-    FOREIGN KEY (Customer) REFERENCES Customer (Email),
-    FOREIGN KEY (Flight_Num, Airline_Name) REFERENCES Flight (Flight_Num, Airline_Name)
+drop table if exists flight_reservations;
+create table flight_reservations(
+	Customer_Email varchar(50),
+	State char(2)
+) as (select c.Email as Customer_Email, a.State
+	from Book b join Flight f join Customer c join Airport a 
+    on b.Flight_Num = f.Flight_Num and b.Airline_Name = f.Airline_Name and c.Email = b.Customer and a.Airport_Id = f.To_Airport 
+    where b.Was_Cancelled = 0 and f.Flight_Date = i_current_date
 );
 
-insert into temp (Customer, Flight_Num, Airline_Name, Num_Seats, Was_Cancelled, rowCount) select *, ROW_NUMBER() over() as rowCount from Book;
-
-set @counter = 1;
-set @rowCounter = (select count(*) from Book);
-
-while (@counter <= @rowCounter) do
-	if ((select Was_Cancelled from Book where Customer = (select Customer from temp where rowCount = @counter) = 0 and i_current_date = (select Flight_Date from Flight where Flight_Num = (select Flight_Num from Book where Customer = (select Customer from temp where rowCount = @counter))))) then
-		if ((select count(Customer) from Book where (Customer = (select Customer from temp where rowCount = @counter)) and Was_Cancelled = 0) <= 1) then
-			update Customer set Location = (select State from Airport where Airport_Id = (select To_Airport from Flight where Flight_Num = (select Flight_Num from Book where Customer = (select Customer from temp where rowCount = @counter))));
-		end if;
-	end if;
-	set @counter = @counter + 1;
-end while;
-
--- drop table if exists flight_reservations;
--- create table flight_reservations(
-	-- Customer_Email varchar(50),
-     -- State char(2)
--- ) as 
-
-	-- (select c.Email, a.State
-    -- from Book b join Flight f join Customer c join Airport a 
-    -- on b.Flight_Num = f.Flight_Num and b.Airline_Name = f.Airline_Name and c.Email = b.Customer and a.Airport_Id = f.To_Airport 
-    -- where b.Was_Cancelled = 0 and f.Flight_Date = i_current_date
--- );
-
--- update Customer, flight_reservations.State set Customer.Location = flight_reservations.Location where Customer.Email = flight_reservations.Customer_Email;
+update Customer, flight_reservations set Customer.Location = flight_reservations.State where Customer.Email = flight_reservations.Customer_Email;
     
 end //
 delimiter ;

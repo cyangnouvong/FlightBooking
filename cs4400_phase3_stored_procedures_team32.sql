@@ -622,6 +622,34 @@ create or replace view temp_view_2 as
         avg(Score) as avgPropertyScore 
 	from property natural join review; 
 	
+-- TEMP VIEWS FOR VIEW_OWNERS
+
+create or replace view temp_view_0 as
+    select owners.Email as email, concat(First_Name, " ", Last_Name) as full_name from accounts natural join owners;
+
+select * from temp_view_0;
+
+create or replace view temp_view_1 as
+    select temp_view_0.email as Owner_Email, 
+        temp_view_0.full_name as full_name,
+        avg(Score) as avg_rating 
+    from temp_view_0 left outer join customers_rate_owners on temp_view_0.email = customers_rate_owners.Owner_Email
+    group by temp_view_0.email;
+
+select * from temp_view_1;
+
+create or replace view temp_view_11 as
+    select temp_view_1.Owner_Email as Owner_Email_11, count(property.Owner_Email) as numProperties from property 
+    right outer join temp_view_1 on temp_view_1.Owner_Email = property.Owner_Email group by temp_view_1.Owner_Email;
+select * from temp_view_11;
+
+create or replace view temp_view_2 as
+    select temp_view_11.Owner_Email_11 as email_2, 
+        temp_view_11.numProperties,
+        avg(Score) as avgPropertyScore 
+    from temp_view_11 left outer join review on temp_view_11.Owner_Email_11 = review.Owner_Email group by temp_view_11.Owner_Email_11;
+select * from temp_view_2;
+    
 -- ID: 8b
 -- Name: view_owners
 create or replace view view_owners (
@@ -630,7 +658,8 @@ create or replace view view_owners (
     num_properties_owned, 
     avg_property_rating
 ) as
-	select full_name, avgScore, numProperties, avgPropertyScore from temp_view_1 natural join temp_view_2;
+    select full_name, avg_rating, numProperties, avgPropertyScore from temp_view_1 
+    left join temp_view_2 on temp_view_1.Owner_Email = temp_view_2.email_2;
 
 -- ID: 9a
 -- Name: process_date
@@ -642,48 +671,17 @@ create procedure process_date (
 sp_main: begin
 -- TODO: Implement your solution here
 
--- HELP: No clue if this works
-
-create table temp (
-    Customer VARCHAR(50) NOT NULL,
-    Flight_Num CHAR(5) NOT NULL,
-    Airline_Name VARCHAR(50) NOT NULL,
-    Num_Seats INT NOT NULL CHECK (Num_Seats > 0),
-    Was_Cancelled BOOLEAN NOT NULL,
-    rowCount INT,
-
-    PRIMARY KEY (Customer, Flight_Num, Airline_Name),
-    FOREIGN KEY (Customer) REFERENCES Customer (Email),
-    FOREIGN KEY (Flight_Num, Airline_Name) REFERENCES Flight (Flight_Num, Airline_Name)
+drop table if exists flight_reservations;
+create table flight_reservations(
+	Customer_Email varchar(50),
+	State char(2)
+) as (select c.Email as Customer_Email, a.State
+	from Book b join Flight f join Customer c join Airport a 
+    on b.Flight_Num = f.Flight_Num and b.Airline_Name = f.Airline_Name and c.Email = b.Customer and a.Airport_Id = f.To_Airport 
+    where b.Was_Cancelled = 0 and f.Flight_Date = i_current_date
 );
 
-insert into temp (Customer, Flight_Num, Airline_Name, Num_Seats, Was_Cancelled, rowCount) select *, ROW_NUMBER() over() as rowCount from Book;
-
-set @counter = 1;
-set @rowCounter = (select count(*) from Book);
-
-while (@counter <= @rowCounter) do
-	if ((select Was_Cancelled from Book where Customer = (select Customer from temp where rowCount = @counter) = 0 and i_current_date = (select Flight_Date from Flight where Flight_Num = (select Flight_Num from Book where Customer = (select Customer from temp where rowCount = @counter))))) then
-		if ((select count(Customer) from Book where (Customer = (select Customer from temp where rowCount = @counter)) and Was_Cancelled = 0) <= 1) then
-			update Customer set Location = (select State from Airport where Airport_Id = (select To_Airport from Flight where Flight_Num = (select Flight_Num from Book where Customer = (select Customer from temp where rowCount = @counter))));
-		end if;
-	end if;
-	set @counter = @counter + 1;
-end while;
-
--- drop table if exists flight_reservations;
--- create table flight_reservations(
-	-- Customer_Email varchar(50),
-     -- State char(2)
--- ) as 
-
-	-- (select c.Email, a.State
-    -- from Book b join Flight f join Customer c join Airport a 
-    -- on b.Flight_Num = f.Flight_Num and b.Airline_Name = f.Airline_Name and c.Email = b.Customer and a.Airport_Id = f.To_Airport 
-    -- where b.Was_Cancelled = 0 and f.Flight_Date = i_current_date
--- );
-
--- update Customer, flight_reservations.State set Customer.Location = flight_reservations.Location where Customer.Email = flight_reservations.Customer_Email;
+update Customer, flight_reservations set Customer.Location = flight_reservations.State where Customer.Email = flight_reservations.Customer_Email;
     
 end //
 delimiter ;
