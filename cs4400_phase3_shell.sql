@@ -9,6 +9,8 @@
 -- Please follow all instructions for Phase III as listed on Canvas.
 -- Fill in the team number and names and GT usernames for all members above.
 
+use travel_reservation_service;
+SET GLOBAL log_bin_trust_function_creators = 1;
 
 -- ID: 1a
 -- Name: register_customer
