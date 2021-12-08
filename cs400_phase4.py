@@ -19,10 +19,9 @@ def server_connection(hostName, userName, userPassword, database):
     return connection 
 
 frameList = []
-connection = server_connection("localhost", "root", "050901", "travel_reservation_service") # need to start server first
+connection = server_connection("localhost", "root", "050901", "travel_reservation_service") # need to start server first - 3rd parameter is your password
 
 def main():
-    
     root = tk.Tk()
     root.geometry("500x500")
     root.title("Login")
