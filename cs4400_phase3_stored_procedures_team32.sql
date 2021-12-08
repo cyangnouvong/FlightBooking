@@ -454,11 +454,12 @@ sp_main: begin
     );
     
     if (i_property_name in (select Property_Name from Property where Owner_Email = i_owner_email)) then
-		insert into view_individual_property_reservations (
-			select i_property_name, r.Start_Date, r.End_Date, r.Customer, c.Phone_Number, calc_total_cost(r.Num_Guests, r.Start_Date, r.End_Date, p.Cost, r.Was_Cancelled), v.Score, v.Content
-            from Reserve r join Clients c join Property p left join Review v 
-            on r.Property_Name = v.Property_Name and r.Owner_Email = v.Owner_Email and r.Customer = c.Email and p.Property_Name = r.Property_Name and p.Owner_Email = r.Owner_Email
-		);
+		insert into view_individual_property_reservations 
+			select r.Property_Name, r.Start_Date, r.End_Date, r.Customer, c.Phone_Number, ((p.Cost * r.Num_guests) * (r.End_Date - r.Start_Date) * (1 - r.Was_Cancelled * 0.8)), v.Score, v.Content
+            from Reserve r join Clients c on r.Customer = c.Email
+            join Property p on p.Property_Name = r.Property_Name and p.Owner_Email = r.Owner_Email
+            left join Review v on r.Property_Name = v.Property_Name and r.Owner_Email = v.Owner_Email and r.Customer = v.Customer
+            where r.Property_Name = i_property_name and r.Owner_Email = i_owner_email;
 	else drop table view_individual_property_reservations;
     end if;
 
@@ -467,16 +468,18 @@ delimiter ;
 
 drop function if exists calc_total_cost;
 delimiter //
-create function calc_total_cost(p_num_guests int(11), p_start_date date, p_end_date date, p_nightly_cost decimal(6,2), p_was_cancelled tinyint(1))
-	returns decimal
+create function calc_total_cost(p_num_guests int, p_start_date date, p_end_date date, p_nightly_cost decimal(6,2), p_was_cancelled tinyint(1))
+	returns decimal(6,2) DETERMINISTIC
 begin
 	set @total = (p_end_date - p_start_date + 1) * p_num_guests * p_nightly_cost;
     
-    if (p_was_cancelled) then return (@total * 0.2); end if;
-    return @total;
+    -- if (p_was_cancelled) then return (@total * 0.2); end if;
+    return cast(@total as decimal(6,2));
     
 end //
 delimiter ;
+
+call view_individual_property_reservations("New York City Property", "cbing10@gmail.com");
 
 
 -- ID: 6a
