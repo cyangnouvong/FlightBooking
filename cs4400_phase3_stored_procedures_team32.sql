@@ -209,7 +209,7 @@ delimiter //
 create function calc_seats_remaining(p_flight_num char(5), p_airline_name varchar(50))
 	returns integer deterministic
 begin
-	return (select Capacity from Flight where Flight_Num = p_flight_num and Airline_Name = p_airline_name) - (select sum(Num_Seats) from Book where Flight_Num = p_flight_num and Airline_Name = p_airline_name and Was_Cancelled = 0);
+	return (select Capacity from Flight where Flight_Num = p_flight_num and Airline_Name = p_airline_name); -- - coalesce((select sum(Num_Seats) from Book where Flight_Num = p_flight_num and Airline_Name = p_airline_name and Was_Cancelled = 0), 0);
 end //
 delimiter ;
 
