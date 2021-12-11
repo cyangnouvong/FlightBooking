@@ -41,9 +41,15 @@ if (i_email in (select Email from Clients)) then
 elseif (i_phone_number in (select Phone_Number from Clients)) then leave sp_main;
 else 
 	if (i_cc_number in (select CcNumber from Customer)) then leave sp_main; end if;
-	insert into Accounts values(i_email, i_first_name, i_last_name, i_password);
-    insert into Clients values(i_email, i_phone_number);
-    insert into Customer values(i_email, i_cc_number, i_cvv, i_exp_date, i_location);
+    if (i_email not in (select Email from Accounts)) then
+		insert into Accounts values(i_email, i_first_name, i_last_name, i_password);
+        end if;
+	if (i_email not in (select Email from Clients)) then
+		insert into Clients values(i_email, i_phone_number);
+        end if;
+	if (i_email not in (select Email from Customer)) then
+		insert into Customer values(i_email, i_cc_number, i_cvv, i_exp_date, i_location);
+        end if;
 end if;
 
 end //
@@ -70,6 +76,13 @@ if (i_email in (select Email from Clients)) then
 	if (i_email in (select Email from Owners)) then leave sp_main; end if;
     insert into Owners values(i_email);
 elseif (i_phone_number in (select Phone_Number from Clients)) then leave sp_main;
+elseif (i_email in (select Email from Accounts)) then
+	if (i_email not in (select Email from Clients)) then
+		insert into Clients values(i_email, i_phone_number);
+        end if;
+	if (i_email not in (select Email from Owners)) then
+		insert into Owners values(i_email);
+		end if;
 else 
 	insert into Accounts values(i_email, i_first_name, i_last_name, i_password);
     insert into Clients values(i_email, i_phone_number);
