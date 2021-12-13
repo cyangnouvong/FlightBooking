@@ -468,7 +468,7 @@ sp_main: begin
     
     if (i_property_name in (select Property_Name from Property where Owner_Email = i_owner_email)) then
 		insert into view_individual_property_reservations 
-			select r.Property_Name, r.Start_Date, r.End_Date, r.Customer, c.Phone_Number, ((p.Cost * r.Num_guests) * (r.End_Date - r.Start_Date) * (1 - r.Was_Cancelled * 0.8)), v.Score, v.Content
+			select r.Property_Name, r.Start_Date, r.End_Date, r.Customer, c.Phone_Number, (p.Cost * (r.End_Date - r.Start_Date + 1) * (1 - r.Was_Cancelled * 0.8)), v.Score, v.Content
             from Reserve r join Clients c on r.Customer = c.Email
             join Property p on p.Property_Name = r.Property_Name and p.Owner_Email = r.Owner_Email
             left join Review v on r.Property_Name = v.Property_Name and r.Owner_Email = v.Owner_Email and r.Customer = v.Customer
